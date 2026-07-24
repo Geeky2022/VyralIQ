@@ -77,6 +77,7 @@ class GenerationService {
         goal: goal,
         tone: tone,
         length: length,
+        dayOfWeek: day,
       );
 
       week.add(DailyContent(

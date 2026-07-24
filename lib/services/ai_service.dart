@@ -26,15 +26,20 @@ class AiService {
     required String goal,
     required String tone,
     required String length,
+    String? dayOfWeek,
   }) async {
     try {
-      final response = await _callable.call<Map<String, dynamic>>({
+      final requestData = <String, dynamic>{
         'platform': platform,
         'niche': niche,
         'goal': goal,
         'tone': tone,
         'length': length,
-      });
+      };
+      if (dayOfWeek != null) {
+        requestData['dayOfWeek'] = dayOfWeek;
+      }
+      final response = await _callable.call<Map<String, dynamic>>(requestData);
 
       final data = response.data;
       if (data == null) {
