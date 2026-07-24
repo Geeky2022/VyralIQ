@@ -1,0 +1,19 @@
+# Compiled output
+lib/
+*.js.map
+*.d.ts
+
+# Dependencies
+node_modules/
+
+# Local emulator files
+.firebase/
+
+# Secrets
+.env
+serviceAccountKey.json
+
+# IDE
+.idea/
+.vscode/
+*.log

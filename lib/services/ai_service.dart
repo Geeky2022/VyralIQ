@@ -1,134 +1,141 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_keys.dart';
+import 'package:firebase_functions/firebase_functions.dart';
+import '../models/generation_result.dart';
+import '../models/script.dart';
 
-/// Wraps OpenAI chat completions API calls.
-/// Handles errors gracefully — network failures, rate limits, invalid API key.
+/// Calls the VyralIQ Firebase Cloud Function (generateContent)
+/// which securely proxies all OpenAI calls server-side.
 class AiService {
-  static const String _baseUrl = 'https://api.openai.com/v1/chat/completions';
+  final HttpsCallable _callable;
 
-  final String _apiKey;
-  final String _model;
-
-  AiService({
-    String? apiKey,
-    String? model,
-  })  : _apiKey = apiKey ?? ApiKeys.openAiApiKey,
-        _model = model ?? ApiKeys.openAiModel;
+  AiService({HttpsCallable? callable})
+      : _callable = callable ??
+            FirebaseFunctions.instance
+                .httpsCallable('generateContent');
 
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Sends a chat completion request with a system prompt and user prompt.
-  /// Returns the assistant's text response.
+  /// Generates all content types via the Cloud Function.
+  /// Returns a complete [GenerationResult].
   ///
   /// Throws [AiServiceException] on failure.
-  Future<String> complete({
-    required String systemPrompt,
-    required String userPrompt,
-    double temperature = 0.9,
-    int maxTokens = 2000,
+  Future<GenerationResult> generateContent({
+    required String platform,
+    required String niche,
+    required String goal,
+    required String tone,
+    required String length,
+    String? dayOfWeek,
   }) async {
-    final uri = Uri.parse(_baseUrl);
-
     try {
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $_apiKey',
-            },
-            body: jsonEncode({
-              'model': _model,
-              'messages': [
-                {'role': 'system', 'content': systemPrompt},
-                {'role': 'user', 'content': userPrompt},
-              ],
-              'temperature': temperature,
-              'max_tokens': maxTokens,
-            }),
-          )
-          .timeout(const Duration(seconds: 90));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final choices = data['choices'] as List<dynamic>?;
-        if (choices == null || choices.isEmpty) {
-          throw AiServiceException('No response from AI — please try again.');
-        }
-        final message = choices[0]['message'] as Map<String, dynamic>?;
-        final content = message?['content'] as String?;
-        if (content == null || content.isEmpty) {
-          throw AiServiceException('Empty response from AI — please try again.');
-        }
-        return content.trim();
-      } else if (response.statusCode == 401) {
-        throw AiServiceException(
-          'Invalid API key. Please check your OpenAI API key in '
-          'lib/config/api_keys.dart',
-          code: 401,
-        );
-      } else if (response.statusCode == 429) {
-        throw AiServiceException(
-          'Rate limit reached. Please wait a moment and try again.',
-          code: 429,
-        );
-      } else if (response.statusCode == 500) {
-        throw AiServiceException(
-          'OpenAI server error. Please try again later.',
-          code: 500,
-        );
-      } else {
-        final body = response.body;
-        String detail = 'Status ${response.statusCode}';
-        try {
-          final err = jsonDecode(body) as Map<String, dynamic>;
-          if (err.containsKey('error')) {
-            final e = err['error'] as Map<String, dynamic>;
-            detail = e['message'] as String? ?? detail;
-          }
-        } catch (_) {}
-        throw AiServiceException(detail, code: response.statusCode);
+      final requestData = <String, dynamic>{
+        'platform': platform,
+        'niche': niche,
+        'goal': goal,
+        'tone': tone,
+        'length': length,
+      };
+      if (dayOfWeek != null) {
+        requestData['dayOfWeek'] = dayOfWeek;
       }
+      final response = await _callable.call<Map<String, dynamic>>(requestData);
+
+      final data = response.data;
+      if (data == null) {
+        throw AiServiceException('Empty response from server.');
+      }
+
+      return _parseResult(data);
+    } on FirebaseFunctionsException catch (e) {
+      throw AiServiceException(
+        _mapFirebaseError(e),
+        code: _codeFromFirebaseError(e),
+      );
     } on AiServiceException {
       rethrow;
-    } on http.ClientException catch (e) {
+    } catch (e) {
       throw AiServiceException(
-        'Network error: unable to reach OpenAI. Check your internet connection.',
+        'Unable to reach VyralIQ servers. Check your connection and try again.',
         code: 0,
-        original: e,
-      );
-    } on Exception catch (e) {
-      if (e.toString().contains('TimeoutException')) {
-        throw AiServiceException(
-          'Request timed out. The AI is taking too long — please try again.',
-          code: 408,
-        );
-      }
-      throw AiServiceException(
-        'Unexpected error: ${e.toString()}',
-        code: -1,
         original: e,
       );
     }
   }
 
-  /// Sends multiple completion requests in parallel and returns results.
-  /// Useful for generating independent content sections simultaneously.
-  Future<List<String>> completeMultiple(
-    List<({String systemPrompt, String userPrompt})> prompts, {
-    double temperature = 0.9,
-    int maxTokens = 2000,
-  }) async {
-    final futures = prompts.map((p) => complete(
-          systemPrompt: p.systemPrompt,
-          userPrompt: p.userPrompt,
-          temperature: temperature,
-          maxTokens: maxTokens,
-        ));
-    return Future.wait(futures);
+  // ---------------------------------------------------------------------------
+  // Parsing
+  // ---------------------------------------------------------------------------
+
+  GenerationResult _parseResult(Map<String, dynamic> data) {
+    return GenerationResult(
+      viralHooks: List<String>.from(data['viralHooks'] ?? []),
+      videoIdeas: List<String>.from(data['videoIdeas'] ?? []),
+      scripts: (data['scripts'] as List<dynamic>?)
+              ?.map((s) => Script(
+                    hook: (s as Map<String, dynamic>)['hook'] as String? ?? '',
+                    body: s['body'] as String? ?? '',
+                    cta: s['cta'] as String? ?? '',
+                  ))
+              .toList() ??
+          [],
+      caption: data['caption'] as String? ?? '',
+      cta: data['cta'] as String? ?? '',
+      hashtags: List<String>.from(data['hashtags'] ?? []),
+      thumbnailText: data['thumbnailText'] as String? ?? '',
+      editingSuggestions: data['editingSuggestions'] as String? ?? '',
+      bRollIdeas: List<String>.from(data['bRollIdeas'] ?? []),
+      cameraAngles: data['cameraAngles'] as String? ?? '',
+      lightingSuggestions: data['lightingSuggestions'] as String? ?? '',
+      musicStyle: data['musicStyle'] as String? ?? '',
+      bestPostingTime: data['bestPostingTime'] as String? ?? '',
+      seoKeywords: List<String>.from(data['seoKeywords'] ?? []),
+      repurposeIdeas: List<String>.from(data['repurposeIdeas'] ?? []),
+      carouselVersion: data['carouselVersion'] as String? ?? '',
+      instagramStoryVersion: data['instagramStoryVersion'] as String? ?? '',
+      facebookVersion: data['facebookVersion'] as String? ?? '',
+      linkedinVersion: data['linkedinVersion'] as String? ?? '',
+      pinterestVersion: data['pinterestVersion'] as String? ?? '',
+      platform: data['platform'] as String? ?? '',
+      niche: data['niche'] as String? ?? '',
+      goal: data['goal'] as String? ?? '',
+      tone: data['tone'] as String? ?? '',
+      length: data['length'] as String? ?? '',
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error mapping
+  // ---------------------------------------------------------------------------
+
+  String _mapFirebaseError(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'invalid-argument':
+        return 'Invalid request. Please check your selections.';
+      case 'resource-exhausted':
+        return 'AI rate limit reached. Please wait a moment and try again.';
+      case 'unauthenticated':
+        return 'Please sign in to continue.';
+      case 'internal':
+        return e.message ?? 'Server error. Please try again later.';
+      default:
+        return e.message ?? 'An unexpected error occurred.';
+    }
+  }
+
+  int _codeFromFirebaseError(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'invalid-argument':
+        return 400;
+      case 'unauthenticated':
+        return 401;
+      case 'resource-exhausted':
+        return 429;
+      case 'internal':
+        return 500;
+      default:
+        return -1;
+    }
   }
 }
 
