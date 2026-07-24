@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_theme.dart';
 import '../../services/generation_service.dart';
+import '../../services/subscription_service.dart';
 
 class WeeklyCalendarScreen extends StatefulWidget {
   final String platform;
@@ -72,6 +73,9 @@ class _WeeklyCalendarScreenState extends State<WeeklyCalendarScreen> {
       );
 
       if (mounted) {
+        // Record generation for usage tracking
+        SubscriptionService().recordGeneration();
+
         setState(() {
           _loading = false;
           _week = week;

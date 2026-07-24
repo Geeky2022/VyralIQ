@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../models/generation_result.dart';
 import '../../models/script.dart';
 import '../../services/generation_service.dart';
+import '../../services/subscription_service.dart';
 import 'weekly_calendar_screen.dart';
 
 class CreateResultScreen extends StatefulWidget {
@@ -81,6 +82,9 @@ class _CreateResultScreenState extends State<CreateResultScreen> {
 
       timer.cancel();
       if (mounted) {
+        // Record the generation for usage tracking
+        SubscriptionService().recordGeneration();
+
         setState(() {
           _loading = false;
           _result = result;
