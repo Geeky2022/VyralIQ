@@ -21,3 +21,4 @@ pubspec.lock
 *.freezed.dart
 
 # API Keys (DO NOT COMMIT)
+lib/config/api_keys.dart
