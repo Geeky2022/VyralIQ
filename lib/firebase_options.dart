@@ -35,7 +35,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
-    appId: 'TODO_ANDROID_APP_ID', // Register Android app in Firebase console
+    appId: '1:241278334117:android:ed6fd25e13c0c36da1894c',
     messagingSenderId: '241278334117',
     projectId: 'vyraliq',
     storageBucket: 'vyraliq.firebasestorage.app',
@@ -43,7 +43,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
-    appId: 'TODO_IOS_APP_ID', // Register iOS app in Firebase console
+    appId: '1:241278334117:ios:3bc5f51e87ebcb6aa1894c',
     messagingSenderId: '241278334117',
     projectId: 'vyraliq',
     storageBucket: 'vyraliq.firebasestorage.app',
