@@ -175,3 +175,68 @@ class GenerationResult {
     );
   }
 }
+
+/// Serialization helpers for GenerationResult.
+extension GenerationResultJson on GenerationResult {
+  Map<String, dynamic> toJson() => {
+        'viralHooks': viralHooks,
+        'videoIdeas': videoIdeas,
+        'scripts': scripts.map((s) => s.toJson()).toList(),
+        'caption': caption,
+        'cta': cta,
+        'hashtags': hashtags,
+        'thumbnailText': thumbnailText,
+        'editingSuggestions': editingSuggestions,
+        'bRollIdeas': bRollIdeas,
+        'cameraAngles': cameraAngles,
+        'lightingSuggestions': lightingSuggestions,
+        'musicStyle': musicStyle,
+        'bestPostingTime': bestPostingTime,
+        'seoKeywords': seoKeywords,
+        'repurposeIdeas': repurposeIdeas,
+        'carouselVersion': carouselVersion,
+        'instagramStoryVersion': instagramStoryVersion,
+        'facebookVersion': facebookVersion,
+        'linkedinVersion': linkedinVersion,
+        'pinterestVersion': pinterestVersion,
+        'platform': platform,
+        'niche': niche,
+        'goal': goal,
+        'tone': tone,
+        'length': length,
+        'savedAt': DateTime.now().toIso8601String(),
+      };
+
+  factory GenerationResult.fromJson(Map<String, dynamic> json) {
+    return GenerationResult(
+      viralHooks: List<String>.from(json['viralHooks'] ?? []),
+      videoIdeas: List<String>.from(json['videoIdeas'] ?? []),
+      scripts: (json['scripts'] as List<dynamic>?)
+              ?.map((s) => Script.fromJson(s as Map<String, dynamic>))
+              .toList() ??
+          [],
+      caption: json['caption'] as String? ?? '',
+      cta: json['cta'] as String? ?? '',
+      hashtags: List<String>.from(json['hashtags'] ?? []),
+      thumbnailText: json['thumbnailText'] as String? ?? '',
+      editingSuggestions: json['editingSuggestions'] as String? ?? '',
+      bRollIdeas: List<String>.from(json['bRollIdeas'] ?? []),
+      cameraAngles: json['cameraAngles'] as String? ?? '',
+      lightingSuggestions: json['lightingSuggestions'] as String? ?? '',
+      musicStyle: json['musicStyle'] as String? ?? '',
+      bestPostingTime: json['bestPostingTime'] as String? ?? '',
+      seoKeywords: List<String>.from(json['seoKeywords'] ?? []),
+      repurposeIdeas: List<String>.from(json['repurposeIdeas'] ?? []),
+      carouselVersion: json['carouselVersion'] as String? ?? '',
+      instagramStoryVersion: json['instagramStoryVersion'] as String? ?? '',
+      facebookVersion: json['facebookVersion'] as String? ?? '',
+      linkedinVersion: json['linkedinVersion'] as String? ?? '',
+      pinterestVersion: json['pinterestVersion'] as String? ?? '',
+      platform: json['platform'] as String? ?? '',
+      niche: json['niche'] as String? ?? '',
+      goal: json['goal'] as String? ?? '',
+      tone: json['tone'] as String? ?? '',
+      length: json['length'] as String? ?? '',
+    );
+  }
+}
