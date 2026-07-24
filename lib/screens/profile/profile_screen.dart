@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/auth_service.dart';
 import '../../services/memory_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/plan_card.dart';
+import '../subscription/subscription_screen.dart';
 import '../../models/user_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,9 +17,14 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final MemoryService _memory = MemoryService();
   final AuthService _auth = AuthService();
+  final SubscriptionService _sub = SubscriptionService();
 
   UserProfile _profile = UserProfile();
   bool _loading = true;
+
+  SubscriptionTier _currentTier = SubscriptionTier.free;
+  int _generationsUsed = 0;
+  int _generationsLimit = 3;
 
   late TextEditingController _businessNameController;
   late TextEditingController _targetAudienceController;
@@ -47,8 +55,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfile() async {
     final profile = await _memory.loadProfile();
+    final tier = await _sub.getTier();
+    final used = await _sub.getGenerationsUsedToday();
     setState(() {
       _profile = profile;
+      _currentTier = tier;
+      _generationsUsed = used;
+      _generationsLimit = tier.dailyGenerationLimit;
       _loading = false;
       _businessNameController.text = profile.businessName;
       _targetAudienceController.text = profile.targetAudience;
@@ -369,6 +382,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ]),
 
+                  const SizedBox(height: 24),
+
+                  // ── Subscription Section ──
+                  _SectionHeader(title: 'Subscription'),
+                  const SizedBox(height: 12),
+                  _buildSubscriptionCard(),
+
                   const SizedBox(height: 32),
 
                   // Sign Out
@@ -401,6 +421,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
     );
+  }
+
+  void _openSubscriptionScreen() async {
+    await Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const SubscriptionScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+    // Refresh data after returning from subscription screen
+    _loadProfile();
   }
 
   List<Widget> _buildUsageStats() {
@@ -472,6 +507,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionCard() {
+    final isFree = _currentTier == SubscriptionTier.free;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: AppTheme.surface,
+        border: Border.all(
+          color: isFree
+              ? AppTheme.surfaceLight.withValues(alpha: 0.3)
+              : AppTheme.gold.withValues(alpha: 0.3),
+        ),
+        boxShadow: isFree
+            ? null
+            : [
+                BoxShadow(
+                  color: AppTheme.gold.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      ),
+      child: Column(
+        children: [
+          // Current plan header
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(
+                    colors: isFree
+                        ? [AppTheme.surfaceLight, AppTheme.surfaceLight]
+                        : [AppTheme.gold, AppTheme.primary],
+                  ),
+                ),
+                child: Icon(
+                  isFree ? Icons.workspace_premium_outlined : Icons.workspace_premium_rounded,
+                  color: isFree ? AppTheme.textSecondary : AppTheme.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          _currentTier.displayName,
+                          style: TextStyle(
+                            color: isFree ? AppTheme.white : AppTheme.gold,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: isFree
+                                ? AppTheme.surfaceLight
+                                : AppTheme.success.withValues(alpha: 0.15),
+                          ),
+                          child: Text(
+                            isFree ? 'Free' : 'Active',
+                            style: TextStyle(
+                              color: isFree ? AppTheme.textSecondary : AppTheme.success,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (isFree)
+                      const Text(
+                        'Limited to 3 generations/day',
+                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                      )
+                    else
+                      Text(
+                        'Unlimited access — thank you! \u{1F64C}',
+                        style: TextStyle(color: AppTheme.gold.withValues(alpha: 0.8), fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // Usage progress (only for free tier)
+          if (isFree)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: UsageProgressBar(
+                used: _generationsUsed,
+                limit: _generationsLimit,
+              ),
+            ),
+
+          // Action buttons
+          if (isFree)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _openSubscriptionScreen,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.gold,
+                  foregroundColor: AppTheme.background,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Upgrade to Pro',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: _openSubscriptionScreen,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.surfaceLight),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Manage Plan',
+                        style: TextStyle(
+                          color: AppTheme.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_currentTier == SubscriptionTier.pro) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _openSubscriptionScreen,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.violet,
+                          foregroundColor: AppTheme.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Go Elite',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: _openSubscriptionScreen,
+              child: const Text(
+                'Compare plans →',
+                style: TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
