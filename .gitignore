@@ -1,0 +1,22 @@
+# Flutter
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+.vscode/
+*.log
+
+# Firebase
+firebase_options.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+pubspec.lock
+
+# Generated
+*.g.dart
+*.freezed.dart
