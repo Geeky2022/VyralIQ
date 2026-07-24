@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart'
 
 /// Firebase configuration for VyralIQ.
 ///
-/// To get real config values, go to the Firebase Console →
-/// Project Settings → Your apps → Web app → Config (the firebaseConfig object).
-/// Then update the TODO placeholders below with the actual values.
+/// Web config is fully populated from the Firebase console.
+/// Android and iOS configs need their platform-specific app IDs —
+/// register those apps in the Firebase console and fill in the TODOs.
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     switch (defaultTargetPlatform) {
@@ -24,48 +24,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'TODO_REPLACE_WITH_WEB_API_KEY',          // e.g. AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    appId: 'TODO_REPLACE_WITH_WEB_APP_ID',             // e.g. 1:123456789012:web:abcdef1234567890
-    messagingSenderId: 'TODO_REPLACE_WITH_MESSAGING_SENDER_ID', // e.g. 123456789012
+    apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
+    appId: '1:241278334117:web:fe9fc37c15cf1b9ea1894c',
+    messagingSenderId: '241278334117',
     projectId: 'vyraliq',
     authDomain: 'vyraliq.firebaseapp.com',
-    storageBucket: 'vyraliq.appspot.com',
-    measurementId: 'TODO_REPLACE_WITH_MEASUREMENT_ID', // e.g. G-XXXXXXXXXX
+    storageBucket: 'vyraliq.firebasestorage.app',
+    measurementId: 'G-DGCBFGRLEW',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'TODO_REPLACE_WITH_ANDROID_API_KEY',      // e.g. AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    appId: 'TODO_REPLACE_WITH_ANDROID_APP_ID',         // e.g. 1:123456789012:android:abcdef1234567890
-    messagingSenderId: 'TODO_REPLACE_WITH_MESSAGING_SENDER_ID', // e.g. 123456789012
+    apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
+    appId: 'TODO_ANDROID_APP_ID', // Register Android app in Firebase console
+    messagingSenderId: '241278334117',
     projectId: 'vyraliq',
-    storageBucket: 'vyraliq.appspot.com',
+    storageBucket: 'vyraliq.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'TODO_REPLACE_WITH_IOS_API_KEY',          // e.g. AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    appId: 'TODO_REPLACE_WITH_IOS_APP_ID',             // e.g. 1:123456789012:ios:abcdef1234567890
-    messagingSenderId: 'TODO_REPLACE_WITH_MESSAGING_SENDER_ID', // e.g. 123456789012
+    apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
+    appId: 'TODO_IOS_APP_ID', // Register iOS app in Firebase console
+    messagingSenderId: '241278334117',
     projectId: 'vyraliq',
-    storageBucket: 'vyraliq.appspot.com',
-    iosBundleId: 'TODO_REPLACE_WITH_IOS_BUNDLE_ID',    // e.g. com.vyraliq.app
+    storageBucket: 'vyraliq.firebasestorage.app',
+    iosBundleId: 'com.vyraliq.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'TODO_REPLACE_WITH_MACOS_API_KEY',        // e.g. AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    appId: 'TODO_REPLACE_WITH_MACOS_APP_ID',           // e.g. 1:123456789012:ios:abcdef1234567890
-    messagingSenderId: 'TODO_REPLACE_WITH_MESSAGING_SENDER_ID', // e.g. 123456789012
+    apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
+    appId: 'TODO_MACOS_APP_ID', // Register macOS app in Firebase console
+    messagingSenderId: '241278334117',
     projectId: 'vyraliq',
-    storageBucket: 'vyraliq.appspot.com',
-    iosBundleId: 'TODO_REPLACE_WITH_MACOS_BUNDLE_ID',  // e.g. com.vyraliq.app
+    storageBucket: 'vyraliq.firebasestorage.app',
+    iosBundleId: 'com.vyraliq.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'TODO_REPLACE_WITH_WINDOWS_API_KEY',      // e.g. AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    appId: 'TODO_REPLACE_WITH_WINDOWS_APP_ID',         // e.g. 1:123456789012:web:abcdef1234567890
-    messagingSenderId: 'TODO_REPLACE_WITH_MESSAGING_SENDER_ID', // e.g. 123456789012
+    apiKey: 'AIzaSyB3jWr4Wv2IYW9Y3v-oAJuzUsbDMo_EPsU',
+    appId: 'TODO_WINDOWS_APP_ID', // Register Windows app in Firebase console
+    messagingSenderId: '241278334117',
     projectId: 'vyraliq',
     authDomain: 'vyraliq.firebaseapp.com',
-    storageBucket: 'vyraliq.appspot.com',
-    measurementId: 'TODO_REPLACE_WITH_MEASUREMENT_ID', // e.g. G-XXXXXXXXXX
+    storageBucket: 'vyraliq.firebasestorage.app',
+    measurementId: 'G-DGCBFGRLEW',
   );
 }
