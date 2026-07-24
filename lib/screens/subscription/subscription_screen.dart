@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_theme.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/plan_card.dart';
@@ -34,24 +35,29 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     });
   }
 
-  void _onUpgrade(SubscriptionTier tier) {
-    // Placeholder — will be wired to Stripe checkout URLs.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Upgrading to ${tier.displayName}...\nStripe integration coming soon!',
-        ),
-        backgroundColor: AppTheme.surface,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  // Stripe payment links for each tier
+  static const _paymentLinks = {
+    SubscriptionTier.pro: 'https://buy.stripe.com/bJe9AVfKL8jL98A8FP6wE00',
+    SubscriptionTier.elite: 'https://buy.stripe.com/aFabJ3gOPbvXdoQ1dn6wE01',
+  };
 
-    // For demo: simulate upgrade
-    _sub.setTier(tier).then((_) {
-      setState(() => _currentTier = tier);
-    });
+  Future<void> _onUpgrade(SubscriptionTier tier) async {
+    final url = _paymentLinks[tier];
+    if (url == null) return;
+
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not open checkout. Please try again.'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+    }
   }
 
   @override
