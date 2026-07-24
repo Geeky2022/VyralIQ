@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
@@ -11,10 +13,11 @@ import 'screens/profile/profile_screen.dart';
 import 'widgets/bottom_nav.dart';
 import 'services/auth_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Firebase will be initialized here when firebase_options.dart is configured.
-  // For now, we run without Firebase - the AuthService handles this gracefully.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const VyralIQApp());
 }
 
@@ -34,8 +37,7 @@ class VyralIQApp extends StatelessWidget {
   }
 }
 
-/// AuthGate listens to auth state and routes accordingly.
-/// When Firebase is configured, this will use real auth state.
+/// AuthGate listens to Firebase auth state and routes accordingly.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -43,32 +45,22 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = AuthService();
 
-    // For now, we default to showing the auth flow.
-    // When Firebase is wired up, uncomment the stream builder below
-    // and remove the direct return of AuthNavigator.
-
-    // TODO: Uncomment when firebase_options.dart is configured:
-    //
-    // return StreamBuilder<User?>(
-    //   stream: authService.authStateChanges,
-    //   builder: (context, snapshot) {
-    //     if (snapshot.connectionState == ConnectionState.waiting) {
-    //       return const Scaffold(
-    //         body: Center(
-    //           child: CircularProgressIndicator(color: AppTheme.primary),
-    //         ),
-    //       );
-    //     }
-    //     if (snapshot.hasData) {
-    //       return const MainShell();
-    //     }
-    //     return const AuthNavigator();
-    //   },
-    // );
-
-    // Placeholder: always show auth for now.
-    // Swap to MainShell() to see the main app without auth.
-    return const AuthNavigator();
+    return StreamBuilder<User?>(
+      stream: authService.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            ),
+          );
+        }
+        if (snapshot.hasData) {
+          return const MainShell();
+        }
+        return const AuthNavigator();
+      },
+    );
   }
 }
 
