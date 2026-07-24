@@ -7,8 +7,7 @@ build/
 .vscode/
 *.log
 
-# Firebase
-firebase_options.dart
+# Firebase generated files (firebase_options.dart is committed with placeholder values)
 
 # OS
 .DS_Store
